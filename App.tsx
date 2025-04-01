@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, Dimensions, Linking, Platform } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, Dimensions, Linking, Platform, Alert } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import EditProfileScreen from "./screens/EditProfileScreen";
 import PrivacyPolicyScreen from "./screens/PrivacyPolicyScreen";
+import { launchImageLibrary, ImageLibraryOptions } from 'react-native-image-picker';
 
 const { width } = Dimensions.get("screen");
 const CURVE_HEIGHT = 150;
@@ -32,6 +33,28 @@ const ProfileScreen = ({ navigation, route }: any) => {
   });
 
   const [notificationEnabled, setNotificationEnabled] = useState<boolean>(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  const handleImagePicker = () => {
+    const options: ImageLibraryOptions = {
+      mediaType: 'photo',
+      includeBase64: false,
+      maxHeight: 2000,
+      maxWidth: 2000,
+      selectionLimit: 1
+    };
+
+    launchImageLibrary(options, (response: any) => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.errorMessage) {
+        console.log('Image picker error: ', response.errorMessage);
+        Alert.alert('Error', 'Something went wrong while selecting the image');
+      } else if (response.assets && response.assets[0].uri) {
+        setProfileImage(response.assets[0].uri);
+      }
+    });
+  };
 
   // Handle notification settings
   const handleNotificationSettings = async () => {
@@ -80,8 +103,14 @@ const ProfileScreen = ({ navigation, route }: any) => {
         {/* Profile Section */}
         <View style={styles.profileSection}>
           <View style={styles.profileBackground}>
-            <Image source={require("./profile.png")} style={styles.profileImage} />
-            <TouchableOpacity style={styles.editIcon}>
+            <Image 
+              source={profileImage ? { uri: profileImage } : require("./profile.png")} 
+              style={styles.profileImage} 
+            />
+            <TouchableOpacity 
+              style={styles.editIcon}
+              onPress={handleImagePicker}
+            >
               <Icon name="edit" size={20} color="#000" />
             </TouchableOpacity>
           </View>
